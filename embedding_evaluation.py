@@ -13,7 +13,7 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-
+import argparse
 
 def read_embeddings(filein):
     rb = open(filein, 'r')
@@ -150,7 +150,7 @@ def cascade_prediction(train_file, test_file, val_file, embedding_file, embeddin
 
 if __name__ == '__main__':
     my_parser = argparse.ArgumentParser(prog='embedding_evaluation',
-                                        usage='%(prog) application embedding_file (needed for clustering: number_clusters, needed for node classification/edge prediction: label_file, needed cascade prediction: train/test/val label files) ',
+                                        usage='embedding_evaluation application(kmeans/node_class/cascade_pred) embedding_file (needed for clustering: number_clusters and label_file, needed for node classification/edge prediction: label_file, needed cascade prediction: train/test/val label files) ',
                                         description='This program takes embeddings and evaluates them on different downstream applications: clustering, node clasification, link prediction and for cascade prediction. ')
     my_parser.add_argument("-e", "--embeddings", required=True,
                            help="path to embedding file")
@@ -167,11 +167,11 @@ if __name__ == '__main__':
     my_parser.add_argument("-v", "--val_label", required=False,
                            help="val label file for cascade prediction")
     args = vars(my_parser.parse_args())
-    if args.get(a) == "kmeans":
-        clustering(args.get("l"), args.get("e"), 128, int(args.get("k")))
+    if args.get('application') == "kmeans":
+        clustering(args.get("label"), args.get("embeddings"), 128, int(args.get("clusters")))
     elif args.get(a) == "node_class":
-        node_classification(args.get("l"), args.get("e"), 128)
+        node_classification(args.get("label"), args.get("embeddings"), 128)
     elif args.get(a) == "cascade_pred":
-        cascade_prediction(args.get("tr"), args.get("te"), args.get("v"), args.get("e"), 128)
+        cascade_prediction(args.get("train_label"), args.get("test_label"), args.get("val_label"), args.get("embeddings"), 128)
     else:
         print("no application found")
