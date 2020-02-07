@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 from graph_operations import read_graph, egonets
 from joblib import Parallel, delayed
 import multiprocessing
-
+import argparse
 
 def normalize_dictionary(v):
     norm_of_v = 0.0
@@ -159,16 +159,16 @@ def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
 
 
 if __name__ == '__main__':
-    my_parser = argparse.ArgumentParser(prog='subgraph_proximity',
-                                        usage='%(prog) path_to_graph path_output_proximity_file',
+    my_parser = argparse.ArgumentParser(prog='egonet_proximity',
+                                        usage='egonet_proximity path_to_graph path_output_proximity_file',
                                         description='This program computes the proximity between ego networks and store it in a file. ')
     my_parser.add_argument("-i", "--input", required=True,
                            help="path to input graph")
-    my_parser.add_argument("-i", "--output", required=True,
+    my_parser.add_argument("-o", "--output", required=True,
                            help="path for output proximity file necessary for subrank")
     args = vars(my_parser.parse_args())
-    g = read_graph(args.get("i"), True)
+    g = read_graph(args.get("input"), True)
     subgraphs = egonets(g, True)
     epsilon = 1.0 / g.num_vertices()
     threshold = 1e-9
-    save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("o"))
+    save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
