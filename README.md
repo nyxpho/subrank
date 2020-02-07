@@ -8,4 +8,7 @@ Steps for computing embeddings:
 2. Download a directed graph and store it as a list of edges.
 3. For the applications of node clustering/node classification/edge prediction we compute the embeddings of egonetworks.
 By default we use egonetworks of size 1. To compute the embedding of ego networks, we first compute the proximity of egonetworks.
+We run the file egonet_proximity with the option --help to get information about the parameters.
+4. We now can compute egonet embeddings, run compute_embeddings with the option --help to get information about the parameters.
+5. Finaly, we can examine the quality of the embeddings with the embedding_evaluation. Give the option --help for more info on the parameters. 
 
