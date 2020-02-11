@@ -24,16 +24,16 @@ might use new vertex indices.
 
 def egonets(graph, direction):
     egonets = dict()
-    for item in graph.iter_edges():
-        vertex_1 = graph.vertex_properties["name"][item[0]]
-        vertex_2 = graph.vertex_properties["name"][item[1]]
+    for item in graph.edges():
+        vertex_1 = graph.vertex_properties["name"][item.source()]
+        vertex_2 = graph.vertex_properties["name"][item.target()]
         if vertex_1 in egonets.keys():
             egonets[vertex_1].append((vertex_1, vertex_2))
         else:
             egonets[vertex_1] = []
             egonets[vertex_1].append((vertex_1, vertex_2))
 
-    for i in graph.iter_vertices():
+    for i in graph.vertices():
         vertex = graph.vertex_properties["name"][i]  # we add the real ids of the vertices
 
         if vertex not in egonets.keys():
@@ -60,13 +60,13 @@ def linkprediction_testtrain(graph, percentage):
     test_edgelist = []
     train_edgelist = []
     degrees = graph.get_total_degrees(graph.get_vertices())
-    for item in graph.iter_edges():
-        tuple_edge = (graph.vertex_properties["name"][item[0]], graph.vertex_properties["name"][item[1]])
+    for item in graph.edges():
+        tuple_edge = (graph.vertex_properties["name"][item.source()], graph.vertex_properties["name"][item.target()])
         if count > 0:
-            if degrees[int(item[1])] > 1 and degrees[int(item[0])] > 1 and int(item[0]) != int(item[1]):
+            if degrees[int(item.target())] > 1 and degrees[int(item.source())] > 1 and int(item.source()) != int(item.target()):
                 count -= 1
-                degrees[int(item[0])] -= 1
-                degrees[int(item[1])] -= 1
+                degrees[int(item.source())] -= 1
+                degrees[int(item.target())] -= 1
                 test_edgelist.append(tuple_edge)
             else:
                 train_edgelist.append(tuple_edge)

@@ -13,8 +13,12 @@ def normalize_dictionary(v):
     for k in v:
         norm_of_v = norm_of_v + v[k]
     v_norm = dict()
-    for k in v:
-        v_norm[k] = v[k] / norm_of_v
+    if norm_of_v == 0:
+        for k in v:
+            v_norm[k] = 1.0 / len(v)
+    else:
+        for k in v:
+            v_norm[k] = v[k] / norm_of_v
     return v_norm
 
 
@@ -113,7 +117,7 @@ def product(M1, M2, j):
     p_dict = product.todok()
     value = 0
     if len(p_dict.items()) > 0:
-        value = p_dict.items()[0][1]
+        value = list(p_dict.items())[0][1]
     return (j, value)
 
 
@@ -135,10 +139,6 @@ def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
         # print results
         for (k, v) in results:
             prox[k] = v
-        # for s2 in subgraphs.keys():
-        #    product = M1 * all_PRs[s2].transpose()
-        #    p_dict = product.todok()
-        #    prox[s2] = p_dict[0][0]
         prox = normalize_dictionary(prox)
         pruned = prune_elements(prox, threshold)
         for poz in pruned:
@@ -159,8 +159,8 @@ def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
 
 
 if __name__ == '__main__':
-    my_parser = argparse.ArgumentParser(prog='egonet_proximity',
-                                        usage='egonet_proximity path_to_graph path_output_proximity_file',
+    my_parser = argparse.ArgumentParser(prog='subgraph_proximity',
+                                        usage='subrank_proximity path_to_graph path_output_proximity_file',
                                         description='This program computes the proximity between ego networks and store it in a file. ')
     my_parser.add_argument("-i", "--input", required=True,
                            help="path to input graph")
@@ -170,5 +170,5 @@ if __name__ == '__main__':
     g = read_graph(args.get("input"), True)
     subgraphs = egonets(g, True)
     epsilon = 1.0 / g.num_vertices()
-    threshold = 1e-9
+    threshold = epsilon
     save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))

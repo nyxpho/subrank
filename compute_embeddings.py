@@ -16,6 +16,7 @@ def generate_subrank_embeddings(path_to_graph, filename_proximity, output_embedd
     conversion_str = "python convert.py " + path_to_graph +" "+ filenamebcsr
     os.system(conversion_str)
     verse_str = "./verse_distributionsample -input " + filenamebcsr +" -pprfile " + filename_proximity + " -output "+ output_embeddings +" -dim 128 -threads 1 -nsamples 3"
+    print(verse_str)
     os.system(verse_str)
 
 if __name__ == '__main__':
