@@ -50,7 +50,7 @@ def clustering(label_file, embedding_file, embedding_dim, clusters):
     return nmi_score
 
 
-def node_classification(label_file, embedding_file, embedding_dim):
+def node_classification(label_file, embedding_file, embedding_dim, percentage_train):
     print("running node_classification ---------------------------------------")
 
     embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
@@ -70,11 +70,11 @@ def node_classification(label_file, embedding_file, embedding_dim):
                        'estimator__C': [1, 10, 100, 1000], 'estimator__probability': [True],
                        'estimator__max_iter': [1000, 5000]}
 
-    x_train, x_test, y_train, y_test = train_test_split(x_data, y_labels, test_size=0.2, random_state=42,
+    x_train, x_test, y_train, y_test = train_test_split(x_data, y_labels, test_size= 1 - percentage_train, random_state=42,
                                                         stratify=y_labels)
 
     model = OneVsOneClassifier(SVC())
-    clf = GridSearchCV(model, parameter_space, n_jobs=-1, cv=5, scoring='f1_micro')
+    clf = GridSearchCV(model, parameter_space, n_jobs=10, cv=5, scoring='f1_micro')
     clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     macro_score = f1_score(y_test, y_pred, average='macro', labels=np.unique(y_pred))
@@ -141,7 +141,7 @@ def cascade_prediction(train_file, test_file, val_file, embedding_file, embeddin
     fold.extend([0 for i in x_val])
     model = MLPRegressor()
     ps = PredefinedSplit(test_fold=fold)
-    clf = GridSearchCV(model, parameter_space, n_jobs=-1, cv=ps)
+    clf = GridSearchCV(model, parameter_space, n_jobs=10, cv=ps)
     clf.fit(x, y)
     print(clf.get_params())
     y_pred = clf.predict(x_test)
@@ -152,14 +152,17 @@ if __name__ == '__main__':
     my_parser = argparse.ArgumentParser(prog='embedding_evaluation',
                                         usage='embedding_evaluation application(kmeans/node_class/cascade_pred) embedding_file (needed for clustering: number_clusters and label_file, needed for node classification/edge prediction: label_file, needed cascade prediction: train/test/val label files) ',
                                         description='This program takes embeddings and evaluates them on different downstream applications: clustering, node clasification, link prediction and for cascade prediction. ')
+    
     my_parser.add_argument("-e", "--embeddings", required=True,
                            help="path to embedding file")
     my_parser.add_argument("-a", "--application", required=True,
                            help="Application: kmeans/node_class/link_pred/cascade_pred")
     my_parser.add_argument("-k", "--clusters", required=False,
-                           help="number of clusters")
+                           help="number of clusters for k means")
     my_parser.add_argument("-l", "--label", required=False,
-                           help="label file for clustering")
+                           help="label file for clustering/node classification")
+    my_parser.add_argument("-pr", "--percentage_train", required = False,
+                          help = "percentage of training data for the node classification")
     my_parser.add_argument("-tr", "--train_label", required=False,
                            help="train label file for cascade prediction")
     my_parser.add_argument("-te", "--test_label", required=False,
@@ -167,11 +170,12 @@ if __name__ == '__main__':
     my_parser.add_argument("-v", "--val_label", required=False,
                            help="val label file for cascade prediction")
     args = vars(my_parser.parse_args())
+    print(args)
     if args.get('application') == "kmeans":
         clustering(args.get("label"), args.get("embeddings"), 128, int(args.get("clusters")))
-    elif args.get(a) == "node_class":
-        node_classification(args.get("label"), args.get("embeddings"), 128)
-    elif args.get(a) == "cascade_pred":
+    elif args.get('application') == "node_class":
+        node_classification(args.get("label"), args.get("embeddings"), 128, float(args.get("percentage_train")))
+    elif args.get('application') == "cascade_pred":
         cascade_prediction(args.get("train_label"), args.get("test_label"), args.get("val_label"), args.get("embeddings"), 128)
     else:
         print("no application found")
