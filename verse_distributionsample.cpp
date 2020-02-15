@@ -338,9 +338,6 @@ int main(int argc, char **argv) {
   // PPR file read --------------------------------------------- ----------------------------
 
   std::fstream in(ppr_file);
-  // std::fstream in("data/NoiseGraphDataset-master/citeseer/citeseer_PPR");
-
-  // std::fstream in("data/NoiseGraphDataset-master/cora/cora_PPR");
   std::string line;
   int veci = 0;
 

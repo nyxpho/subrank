@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 import argparse
 
 def read_embeddings(filein):
@@ -73,8 +73,12 @@ def node_classification(label_file, embedding_file, embedding_dim, percentage_tr
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_labels, test_size= 1 - percentage_train, random_state=42,
                                                         stratify=y_labels)
 
+    '''
     model = OneVsOneClassifier(SVC())
     clf = GridSearchCV(model, parameter_space, n_jobs=10, cv=5, scoring='f1_micro')
+    clf.fit(x_train, y_train)
+    '''
+    clf = OneVsOneClassifier(LinearSVC(random_state=0))
     clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     macro_score = f1_score(y_test, y_pred, average='macro', labels=np.unique(y_pred))
@@ -139,10 +143,14 @@ def cascade_prediction(train_file, test_file, val_file, embedding_file, embeddin
     y = y_train + y_val
     fold = [-1 for i in x_train]
     fold.extend([0 for i in x_val])
+    '''
     model = MLPRegressor()
     ps = PredefinedSplit(test_fold=fold)
     clf = GridSearchCV(model, parameter_space, n_jobs=10, cv=ps)
     clf.fit(x, y)
+    '''
+    clf = MLPRegressor(hidden_layer_sizes=(64,32), activation=relu, solver=adam,shuffle=False, random_state=0)
+    clf.fit(x,y)
     print(clf.get_params())
     y_pred = clf.predict(x_test)
     print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
