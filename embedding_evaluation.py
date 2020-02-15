@@ -15,6 +15,18 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 import argparse
 
+
+def read_embeddings(filein):
+    rb = open(filein, 'r')
+    emb = dict()
+    for line in rb.readlines():
+        elem = line.strip().split(' ')
+        e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
+        emb[int(elem[0])] = e
+    rb.close()
+    return emb
+
+
 def read_embeddings(filein):
     rb = open(filein, 'r')
     emb = dict()
