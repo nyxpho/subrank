@@ -3,7 +3,7 @@ from graph_operations import *
 from joblib import Parallel, delayed
 import multiprocessing
 import argparse
-
+import random
 
 '''
 This function will return a vector of proximities from
@@ -76,34 +76,36 @@ We give a second implementation of the subrank proximity, using random walks.
 This implementation is faster and should be used for large networks.
 '''
 def random_walk_with_restart(graph, node_start, alpha=0.85):
-    prob = np.random()
+    prob = random.random()
     node_end = node_start
     while prob < alpha:
         neigh = graph.get_out_neighbors(node_end)
-        poz = np.randint(0, neigh.size) # the random walk is performed in an unweighted network
+        if neigh.size == 0:
+            break
+        poz = random.randint(0, neigh.size -1) # the random walk is performed in an unweighted network
         node_end = neigh[poz]
-        prob = np.random()
+        prob = random.random()
     return node_end
 
 def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, out_file):
-    wb = open(out_file, "r")
+    wb = open(out_file, "w")
     all_PRs = dict()
     for i in subgraphs.keys():
-        PR_s = PR_subgraph_tocsr(graph, subgraphs[i], epsilon, threshold)
+        PR_s = PR_subgraph_todictandlist(graph, subgraphs[i], epsilon, threshold)
         all_PRs[i] = PR_s
 
     name_to_index = dict()
-    for i in range(graph.num_vertices):
+    for i in range(graph.num_vertices()):
         name_to_index[graph.vertex_properties["name"][i]] = i
 
     for i in range(num_pairs):
         # select a starting ego network
-        index = np.randint(graph.num_vertices())
+        index = random.randint(0, graph.num_vertices() -1)
         ego_start = graph.vertex_properties["name"][index]
 
         # select a node node_start according to its PR in the selected ego network
         pr_s1_list = all_PRs[ego_start][1]
-        pr_node = np.random()
+        pr_node = random.random()
         sum_pr = 0
         node_start = ego_start
         for t in pr_s1_list:
@@ -121,13 +123,14 @@ def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, ou
         prob_s2 = dict()
         for index in in_neigh:
             pr_s2_dict = all_PRs[graph.vertex_properties["name"][index]][0]
-            prob_s2[index] = pr_s2_dict[node_end_name]
+            if node_end_name in pr_s2_dict:
+                prob_s2[index] = pr_s2_dict[node_end_name]
         prob_s2_norm = normalize_dictionary(prob_s2)
         list_prob_s2 = [(k, v) for k, v in prob_s2_norm.items()]
 
         # select the finish ego network according to the probability of node_end belonging to it
         prob_s2_list = sorted(list_prob_s2 , key = lambda tup: tup[1], reverse=True)
-        pr_node = np.random()
+        pr_node = random.random()
         sum_pr = 0
         ego_end = node_end_name
         for t in prob_s2_list:

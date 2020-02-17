@@ -138,7 +138,7 @@ def PR_subgraph_todictandlist(graph, subgraph, eps, threshold):
     pr_dict = dict()
     pr_list = []
     for poz in pruned:
-        poz_initial = int(subgraph.vertex_properties["name"][poz])
+        poz_initial = subgraph.vertex_properties["name"][poz]
         pr_dict[poz_initial] = pruned[poz]
         pr_list.append((poz_initial, pruned[poz]))
     pr_list = sorted(pr_list, key=lambda tup: tup[1], reverse=True)
