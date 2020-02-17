@@ -75,7 +75,7 @@ def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
 We give a second implementation of the subrank proximity, using random walks.
 This implementation is faster and should be used for large networks.
 '''
-def random_walk_with_restart(graph, node_start, alpha=0.85)
+def random_walk_with_restart(graph, node_start, alpha=0.85):
     prob = np.random()
     node_end = node_start
     while prob < alpha:
@@ -124,7 +124,7 @@ def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, ou
             prob_s2[index] = pr_s2_dict[node_end_name]
         prob_s2_norm = normalize_dictionary(prob_s2)
         list_prob_s2 = [(k, v) for k, v in prob_s2_norm.items()]
-        
+
         # select the finish ego network according to the probability of node_end belonging to it
         prob_s2_list = sorted(list_prob_s2 , key = lambda tup: tup[1], reverse=True)
         pr_node = np.random()
@@ -154,4 +154,4 @@ if __name__ == '__main__':
     epsilon = 1.0 / g.num_vertices()
     threshold = epsilon
     #save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
-    generate_pairs_proximity(g, subgraphs, 10000, epsilon, threshold, args.get("output")):
+    generate_pairs_proximity(g, subgraphs, 10000, epsilon, threshold, args.get("output"))
