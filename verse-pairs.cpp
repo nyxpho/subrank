@@ -165,7 +165,14 @@ AVX_LOOP
     w_s[c] += score * w_t[c];
 }
 
-void Train()
+std::pair<int, int> sample_pair(std::vector<std::pair<int, int> > pairs)
+{
+   rand_pair = rand()%pairs.size()
+
+}
+
+
+void Train(std::vector<std::pair<int, int> > pairs)
 {
 #pragma omp parallel num_threads(n_threads)
   {
@@ -192,9 +199,9 @@ void Train()
         last_ncount = ncount;
       }
 
-
-      size_t n1 = irand(nv);
-      size_t n2 = sample_rw(n1);
+      rand_pair = rand()%pairs.size()
+      size_t n1 = pairs[rand_pair].first
+      size_t n2 = pairs[rand_pair].second;
 
       update(&w0[n1 * n_hidden], &w0[n2 * n_hidden], 1, nce_bias);
       for (int i = 0; i < n_samples; i++)
