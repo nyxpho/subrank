@@ -19,23 +19,16 @@ import argparse
 def read_embeddings(filein):
     rb = open(filein, 'r')
     emb = dict()
+    #rb.readline()
     for line in rb.readlines():
         elem = line.strip().split(' ')
         e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
         emb[int(elem[0])] = e
     rb.close()
-    return emb
-
-
-def read_embeddings(filein):
-    rb = open(filein, 'r')
-    emb = dict()
-    for line in rb.readlines():
-        elem = line.strip().split(' ')
-        e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
-        emb[int(elem[0])] = e
-    rb.close()
-    return emb
+    a = []
+    for i in range(0, len(emb)):
+        a.append(emb[i])
+    return a
 
 
 def clustering(label_file, embedding_file, embedding_dim, clusters):
@@ -65,7 +58,9 @@ def clustering(label_file, embedding_file, embedding_dim, clusters):
 def node_classification(label_file, embedding_file, embedding_dim, percentage_train):
     print("running node_classification ---------------------------------------")
 
-    embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
+    #embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
+    embeddings = read_embeddings(embedding_file)
+
     scaler = StandardScaler()
     scaler.fit(embeddings)
     x_data = scaler.transform(embeddings)
