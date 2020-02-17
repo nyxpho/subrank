@@ -1,95 +1,8 @@
-import sys
 import numpy as np
-import graph_tool as gt
-import graph_tool.centrality as gc
-from scipy.sparse import csr_matrix
-from graph_operations import read_graph, egonets
+from graph_operations import *
 from joblib import Parallel, delayed
 import multiprocessing
 import argparse
-
-def normalize_dictionary(v):
-    norm_of_v = 0.0
-    for k in v:
-        norm_of_v = norm_of_v + v[k]
-    v_norm = dict()
-    if norm_of_v == 0:
-        for k in v:
-            v_norm[k] = 1.0 / len(v)
-    else:
-        for k in v:
-            v_norm[k] = v[k] / norm_of_v
-    return v_norm
-
-
-def prune_elements(vec, threshold):
-    new_dict = dict()
-    for (k, v) in vec.items():
-        item = v
-        if item > threshold:
-            new_dict[k] = v
-    return normalize_dictionary(new_dict)
-
-
-'''
-We compute the pagerank of nodes in a induced subgraph.
-'''
-
-
-def PR_subgraph(graph, subgraph, eps, threshold):
-    pr = gc.pagerank(subgraph, epsilon=eps)
-    vec = pr.a
-    vec_dict = dict()
-    index = 0
-    for value in vec:
-        vec_dict[index] = value
-        index += 1
-    pruned = prune_elements(vec_dict, threshold)  # we remove PR values smaller than a threshold for space efficiency
-    data = []
-    row_ind = []
-    col_ind = []
-    for poz in pruned:
-        poz_initial = int(subgraph.vertex_properties["name"][poz])
-        row_ind.append(0)
-        col_ind.append(poz_initial)
-        data.append(pruned[poz])
-
-    return csr_matrix((data, (row_ind, col_ind)), shape=(1, graph.num_vertices()))
-
-
-'''
-We compute the personalised pagerank values between two nodes in the graph.
-'''
-
-
-def PPR_graph(graph, eps, threshold):
-    personalise = np.zeros(graph.num_vertices())
-    prop = graph.new_vertex_property("int16_t")
-    PPRs = []
-    row_ind = []
-    col_ind = []
-
-    for i in range(graph.num_vertices()):
-        personalise[i] = 1
-        prop.a = personalise
-        pr = gc.pagerank(graph, pers=prop, epsilon=eps)
-        vec = pr.a
-        vec_dict = dict()
-        index = 0
-        for value in vec:
-            vec_dict[index] = value
-            index += 1
-        pruned = prune_elements(vec_dict,
-                                threshold)  # we remove PPR values smaller than a threshold for space efficiency
-        for poz in pruned:
-            i_initial = int(graph.vertex_properties["name"][i])
-            j_initial = int(graph.vertex_properties["name"][poz])
-            row_ind.append(i_initial)
-            col_ind.append(j_initial)
-            PPRs.append(pruned[poz])
-        personalise[i] = 0
-
-    return csr_matrix((PPRs, (row_ind, col_ind)), shape=(graph.num_vertices(), graph.num_vertices()))
 
 
 '''
@@ -123,9 +36,9 @@ def product(M1, M2, j):
 
 def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
     all_PRs = dict()
-    PPR = PPR_graph(graph, epsilon, threshold)
+    PPR = PPR_graph_tocsr(graph, epsilon, threshold)
     for i in subgraphs.keys():
-        PR_s = PR_subgraph(graph, subgraphs[i], epsilon, threshold)
+        PR_s = PR_subgraph_tocsr(graph, subgraphs[i], epsilon, threshold)
         all_PRs[i] = PR_s
     print("computed all PR and PPR values")
     sub_rank = []
@@ -158,6 +71,75 @@ def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
         f.write('\n')
 
 
+'''
+We give a second implementation of the subrank proximity, using random walks.
+This implementation is faster and should be used for large networks.
+'''
+def random_walk_with_restart(graph, node_start, alpha=0.85)
+    prob = np.random()
+    node_end = node_start
+    while prob < alpha:
+        neigh = graph.get_out_neighbors(node_end)
+        poz = np.randint(0, neigh.size) # the random walk is performed in an unweighted network
+        node_end = neigh[poz]
+        prob = np.random()
+    return node_end
+
+def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, out_file):
+    wb = open(out_file, "r")
+    all_PRs = dict()
+    for i in subgraphs.keys():
+        PR_s = PR_subgraph_tocsr(graph, subgraphs[i], epsilon, threshold)
+        all_PRs[i] = PR_s
+
+    name_to_index = dict()
+    for i in range(graph.num_vertices):
+        name_to_index[graph.vertex_properties["name"][i]] = i
+
+    for i in range(num_pairs):
+        # select a starting ego network
+        index = np.randint(graph.num_vertices())
+        ego_start = graph.vertex_properties["name"][index]
+
+        # select a node node_start according to its PR in the selected ego network
+        pr_s1_list = all_PRs[ego_start][1]
+        pr_node = np.random()
+        sum_pr = 0
+        node_start = ego_start
+        for t in pr_s1_list:
+            if sum_pr <= pr_node < sum_pr + t[1]:
+                node_start = t[0]
+                break
+            sum_pr = sum_pr + t[1]
+
+        # perform from the node_start a random walk in the graph until node_end
+        node_end = random_walk_with_restart(graph, name_to_index[node_start])
+
+        # retrieve all the ego networks containing node_end and its probability in these ego networks
+        in_neigh = graph.get_in_neighbors(node_end)
+        node_end_name = graph.vertex_properties["name"][node_end]
+        prob_s2 = dict()
+        for index in in_neigh:
+            pr_s2_dict = all_PRs[graph.vertex_properties["name"][index]][0]
+            prob_s2[index] = pr_s2_dict[node_end_name]
+        prob_s2_norm = normalize_dictionary(prob_s2)
+        list_prob_s2 = [(k, v) for k, v in prob_s2_norm.items()]
+        
+        # select the finish ego network according to the probability of node_end belonging to it
+        prob_s2_list = sorted(list_prob_s2 , key = lambda tup: tup[1], reverse=True)
+        pr_node = np.random()
+        sum_pr = 0
+        ego_end = node_end_name
+        for t in prob_s2_list:
+            if sum_pr <= pr_node < sum_pr + t[1]:
+                ego_end = graph.vertex_properties["name"][t[0]]
+                break
+            sum_pr = sum_pr + t[1]
+
+        wb.write(str(ego_start) + " " + str(ego_end) + "\n")
+
+    wb.close()
+
 if __name__ == '__main__':
     my_parser = argparse.ArgumentParser(prog='subgraph_proximity',
                                         usage='subrank_proximity path_to_graph path_output_proximity_file',
@@ -171,4 +153,5 @@ if __name__ == '__main__':
     subgraphs = egonets(g, True)
     epsilon = 1.0 / g.num_vertices()
     threshold = epsilon
-    save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
+    #save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
+    generate_pairs_proximity(g, subgraphs, 10000, epsilon, threshold, args.get("output")):
