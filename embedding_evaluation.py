@@ -16,11 +16,9 @@ from sklearn.svm import SVC
 import argparse
 
 
-def read_embeddings(filein):
+def read_embeddings_avg(filein):
     rb = open(filein, 'r')
     emb = dict()
-    #rb.readline()
-    index = 0
     for line in rb.readlines():
         elem = line.strip().split(' ')
         e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
@@ -34,6 +32,33 @@ def read_embeddings(filein):
         #    a.append(np.zeros(128))
     return a
 
+def read_embeddings_line(filein):
+    rb = open(filein, 'r')
+    emb = dict()
+    a = []
+    for line in rb.readlines():
+        elem = line.strip().split(' ')
+        e = np.fromstring(' '.join(elem[0:]), dtype=np.float, sep=' ')
+        a.append(e)
+        index +=1
+    rb.close()
+    return a
+
+def read_embeddings_sub2vec(filein, n):
+    rb = open(filein, 'r')
+    emb = dict()
+    for line in rb.readlines():
+        elem = line.strip().split(' ')
+        e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
+        emb[int(elem[0])] = e
+    rb.close()
+    a = []
+    for i in range(0, n):
+        if i in emb:
+            a.append(emb[i])
+        else:
+            a.append(np.zeros(128))
+    return a
 
 def clustering(label_file, embedding_file, embedding_dim, clusters):
     print('performing kmeans clustering -------------------------------------------')
