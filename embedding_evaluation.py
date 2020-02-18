@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 import argparse
 
 
@@ -73,20 +73,23 @@ def node_classification(label_file, embedding_file, embedding_dim, percentage_tr
         y_labels.append(int(item[1]))
 
     y_labels = np.array(y_labels)
-    parameter_space = {'estimator__kernel': ['rbf', 'linear', 'sigmoid', 'poly'], 'estimator__gamma': [1e-3, 1e-4],
-                       'estimator__C': [1, 10, 100, 1000], 'estimator__probability': [True],
-                       'estimator__max_iter': [1000, 5000]}
+    parameter_space = {'estimator__kernel':['rbf', 'linear','sigmoid','poly'],
+                        'estimator__gamma':[1e-3, 1e-4],
+                        'estimator__probability':[True],
+                       'estimator__C': [1, 10, 100, 1000], 
+                       'estimator__max_iter': [1000, 5000]
+                       }
 
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_labels, test_size= 1 - percentage_train, random_state=42,
                                                         stratify=y_labels)
 
-    '''
+    
     model = OneVsOneClassifier(SVC())
     clf = GridSearchCV(model, parameter_space, n_jobs=10, cv=5, scoring='f1_micro')
     clf.fit(x_train, y_train)
-    '''
-    clf = OneVsOneClassifier(LinearSVC(random_state=0))
-    clf.fit(x_train, y_train)
+    
+    #clf = OneVsOneClassifier(LinearSVC(random_state=0))
+    #clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     macro_score = f1_score(y_test, y_pred, average='macro', labels=np.unique(y_pred))
     micro_score = f1_score(y_test, y_pred, average='micro', labels=np.unique(y_pred))
