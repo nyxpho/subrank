@@ -102,44 +102,57 @@ def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, ou
         # select a starting ego network
         index = random.randint(0, graph.num_vertices() -1)
         ego_start = graph.vertex_properties["name"][index]
-
+        node_start = ego_start
         # select a node node_start according to its PR in the selected ego network
+        '''
         pr_s1_list = all_PRs[ego_start][1]
         pr_node = random.random()
         sum_pr = 0
+        #print(pr_s1_list)
+        #print(pr_node)
         node_start = ego_start
         for t in pr_s1_list:
             if sum_pr <= pr_node < sum_pr + t[1]:
                 node_start = t[0]
                 break
             sum_pr = sum_pr + t[1]
-
+        #print(node_start)
+        '''
         # perform from the node_start a random walk in the graph until node_end
         node_end = random_walk_with_restart(graph, name_to_index[node_start])
 
+        '''
         # retrieve all the ego networks containing node_end and its probability in these ego networks
         in_neigh = graph.get_in_neighbors(node_end)
         node_end_name = graph.vertex_properties["name"][node_end]
         prob_s2 = dict()
         for index in in_neigh:
             pr_s2_dict = all_PRs[graph.vertex_properties["name"][index]][0]
-            if node_end_name in pr_s2_dict:
-                prob_s2[index] = pr_s2_dict[node_end_name]
+            #if node_end_name in pr_s2_dict:
+            prob_s2[index] = pr_s2_dict[node_end_name]
+        prob_s2[node_end] = all_PRs[node_end_name][0][node_end_name]
         prob_s2_norm = normalize_dictionary(prob_s2)
         list_prob_s2 = [(k, v) for k, v in prob_s2_norm.items()]
 
         # select the finish ego network according to the probability of node_end belonging to it
         prob_s2_list = sorted(list_prob_s2 , key = lambda tup: tup[1], reverse=True)
         pr_node = random.random()
-        sum_pr = 0
+        sum_pr = 0.0
+        #print(node_end)
+        #print(prob_s2_list)
+        #print(pr_node)
         ego_end = node_end_name
+        index_ego_end = node_end
         for t in prob_s2_list:
             if sum_pr <= pr_node < sum_pr + t[1]:
                 ego_end = graph.vertex_properties["name"][t[0]]
+                index_ego_end = t[0]
                 break
             sum_pr = sum_pr + t[1]
-
-        wb.write(str(ego_start) + " " + str(ego_end) + "\n")
+        #print(index_ego_end)
+        wb.write(ego_start + " " + ego_end + "\n")
+        '''
+        wb.write(ego_start + ' '+ graph.vertex_properties["name"][node_end] + '\n')
 
     wb.close()
 
@@ -153,8 +166,9 @@ if __name__ == '__main__':
                            help="path for output proximity file necessary for subrank")
     args = vars(my_parser.parse_args())
     g = read_graph(args.get("input"), True)
+    random.seed(42)
     subgraphs = egonets(g, True)
     epsilon = 1.0 / g.num_vertices()
     threshold = epsilon
     #save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
-    generate_pairs_proximity(g, subgraphs, 10000, epsilon, threshold, args.get("output"))
+    generate_pairs_proximity(g, subgraphs, 1000000, epsilon, threshold, args.get("output"))

@@ -134,13 +134,14 @@ def PR_subgraph_todictandlist(graph, subgraph, eps, threshold):
     for value in vec:
         vec_dict[index] = value
         index += 1
-    pruned = prune_elements(vec_dict, threshold)  # we remove PR values smaller than a threshold for space efficiency
+    #pruned = prune_elements(vec_dict, threshold)  # we remove PR values smaller than a threshold for space efficiency
     pr_dict = dict()
     pr_list = []
-    for poz in pruned:
+    norm_dict = normalize_dictionary(vec_dict)
+    for poz in norm_dict:
         poz_initial = subgraph.vertex_properties["name"][poz]
-        pr_dict[poz_initial] = pruned[poz]
-        pr_list.append((poz_initial, pruned[poz]))
+        pr_dict[poz_initial] = norm_dict[poz]
+        pr_list.append((poz_initial, norm_dict[poz]))
     pr_list = sorted(pr_list, key=lambda tup: tup[1], reverse=True)
     return (pr_dict, pr_list)
 '''

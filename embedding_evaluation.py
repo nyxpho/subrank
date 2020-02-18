@@ -58,8 +58,8 @@ def clustering(label_file, embedding_file, embedding_dim, clusters):
 def node_classification(label_file, embedding_file, embedding_dim, percentage_train):
     print("running node_classification ---------------------------------------")
 
-    #embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
-    embeddings = read_embeddings(embedding_file)
+    embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
+    #embeddings = read_embeddings(embedding_file)
 
     scaler = StandardScaler()
     scaler.fit(embeddings)

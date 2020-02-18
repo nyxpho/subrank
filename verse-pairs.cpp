@@ -151,58 +151,46 @@ int ArgPos(char *str, int argc, char **argv) {
 inline void update(float *w_s, float *w_t, int label, const float bias)
 {
   float score = -bias;
-AVX_LOOP
   for (int c = 0; c < n_hidden; c++)
     score += w_s[c] * w_t[c];
   score = (label - FastSigmoid(score)) * global_lr;
 
-AVX_LOOP
   for (int c = 0; c < n_hidden; c++)
     w_t[c] += score * w_s[c];
 
-AVX_LOOP
   for (int c = 0; c < n_hidden; c++)
     w_s[c] += score * w_t[c];
 }
 
-std::pair<int, int> sample_pair(std::vector<std::pair<int, int> > pairs)
-{
-   rand_pair = rand()%pairs.size()
-
-}
 
 
 void Train(std::vector<std::pair<int, int> > pairs)
 {
-#pragma omp parallel num_threads(n_threads)
-  {
     const float nce_bias = log(nv);
     const float nce_bias_neg = log(nv / float(n_samples));
-    int tid = omp_get_thread_num();
     ull last_ncount = 0;
     ull ncount = 0;
     float lr = global_lr;
-#pragma omp barrier
+    size_t index = 0;
     while (1)
     {
       if (ncount - last_ncount > 10000)
       {
         ull diff = ncount - last_ncount;
-        #pragma omp atomic
         step += diff;
         if (step > total_steps)
           break;
-        if (tid == 0)
           if (!silent)
             cout << fixed << "\r Progress " << std::setprecision(2)
                  << step / (float)(total_steps + 1) * 100 << "%";
         last_ncount = ncount;
       }
-
-      rand_pair = rand()%pairs.size()
-      size_t n1 = pairs[rand_pair].first
-      size_t n2 = pairs[rand_pair].second;
-
+      //size_t index = irand(pairs.size()); 
+      size_t n1 = pairs[index].first;
+      size_t n2 = pairs[index].second;
+      index ++;
+      if (index == pairs.size())
+	      index = 0;
       update(&w0[n1 * n_hidden], &w0[n2 * n_hidden], 1, nce_bias);
       for (int i = 0; i < n_samples; i++)
       {
@@ -210,14 +198,9 @@ void Train(std::vector<std::pair<int, int> > pairs)
         update(&w0[n1 * n_hidden], &w0[neg * n_hidden], 0, nce_bias_neg);
       }
       ncount++;
-    }
   }
 }
 
-std::istream &operator>>(std::istream &in, std::pair<int, int> &p) {
-	   in>>p.first>>p.second;
-	   return in;
-	}
 
 
 int main(int argc, char **argv) {
@@ -304,9 +287,11 @@ int main(int argc, char **argv) {
   std::vector<std::pair<int, int> > pairs;
   std::fstream in(pairs_file);
   string line;
-  while(std::in>>temp) {
+  std::pair<int, int> temp;
+  while(in>>temp.first>>temp.second) 
+ 	 {
 	      pairs.push_back(temp);
-
+               }
 
   w0 = static_cast<float *>(aligned_malloc(nv * n_hidden * sizeof(float), DEFAULT_ALIGN));
   // random initialisation
