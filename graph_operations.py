@@ -23,7 +23,7 @@ might use new vertex indices.
 '''
 
 
-def egonets(graph, direction):
+def egonets_star(graph, direction):
     egonets = dict()
     for item in graph.edges():
         vertex_1 = graph.vertex_properties["name"][item.source()]
@@ -49,6 +49,15 @@ def egonets(graph, direction):
 
     return egonets
 
+def egonets(graph, direction):
+    egonets = dict()
+    for node in graph.vertices():
+        mask = g.new_vertex_property("bool")
+        for u in node.out_neighbours():
+            mask[u] = True
+        mask[node] = True
+        egonets[graph.vertex_properties["name"][node]] = GraphView(graph, vfilt=mask)
+    return egonets
 
 '''
 This function retrieves the test and training edge sets for link prediction.
