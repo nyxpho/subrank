@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
   int index = 0 ;
   sr>>index;
   std::map<int, float> pr_values;
-  std::vector<std::pair<int, float>>> pr_values_list;
+  std::vector<std::pair<int, float>> pr_values_list;
   float value = 0.0;
   int neigh = 0;
   while (sr >> neigh && sr >> value)
@@ -372,12 +372,12 @@ int main(int argc, char **argv) {
    }
    else
    {
-   std::vector<std::pair<int, float>>> pr_list;
+   std::vector<std::pair<int, float>> pr_list;
    pr_list.push_back(std::make_pair(index, value));
    pr_ego_belong[neigh] = pr_list;
    }
   }
-  pr_ego[index] = pr_values;
+  pr_ego_map[index] = pr_values;
   pr_ego_list[index] = pr_values_list;
   }
 
