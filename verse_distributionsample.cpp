@@ -156,18 +156,18 @@ inline int sample_neighbor(int node) {
    return n2;
  }
 
-inline int sample_rw_distr(int node)
+inline int sample_rw_distr(int node,  vector<pair<int, float> > distr)
 {
   int n2 = node;
   // implements the random walk and the final one is returned
   // ppralpha helps in deciding the probability
-  vector<pair<int, float> > tempHere = pr_ego_list[node];
+  //vector<pair<int, float> > tempHere = pr_ego_list[node];
   float rando = drand();
   double run_sum = 0.0;
 
   int ans = 0;
   int flag = 0 ;
-  for ( vector <pair<int,float> >::const_iterator it = tempHere.begin() ; it != tempHere.end(); it++)
+  for ( vector <pair<int,float> >::const_iterator it = distr.begin() ; it != distr.end(); it++)
   {
         run_sum += (double)it->second;
         if(rando < run_sum)
@@ -182,17 +182,19 @@ inline int sample_rw_distr(int node)
   {
     return ans;
   }
-  else return tempHere[tempHere.size()-1].first;
+  else return distr[distr.size()-1].first;
 
 }
 
 
 inline int sample_pair(int node)
 {
-  int start_node = sample_rw_distr(node);
+  int start_node = sample_rw_distr(node, pr_ego_list[node]);
   int inter_node = sample_rw(start_node);
-
+  int end_node = sample_rw_distr(inter_node, pr_ego_belong[node])
+  return end_node;
   // now we need to find the ego network to which it belongs
+
 }
 int ArgPos(char *str, int argc, char **argv) {
   for (int a = 1; a < argc; a++)
@@ -252,7 +254,7 @@ void Train()
 
 
       size_t n1 = irand(nv);
-      size_t n2 = sample_rw(n1);
+      size_t n2 = sample_pair(n1);
 
       update(&w0[n1 * n_hidden], &w0[n2 * n_hidden], 1, nce_bias);
       for (int i = 0; i < n_samples; i++)
@@ -381,6 +383,20 @@ int main(int argc, char **argv) {
   pr_ego_list[index] = pr_values_list;
   }
 
+  for (std::map<int,  std::vector<std::pair<int, float>> >::iterator it=pr_ego_belong.begin(); it!=pr_ego_belong.end(); ++it)
+  {   std::vector<std::pair<int, float>> to_sort = it->second;
+      sort(to_sort.begin(), to_sort.end(), sortbysec);
+      float all_prob = 0.0;
+      for ( vector < std::pair<int, float> >::iterator i = to_sort.begin() ; i != to_sort.end(); i++){
+           all_prob += i->second;
+        }
+        if (all_prob == 0)
+           continue;
+        for ( vector < std::pair<int, float> >::iterator i = to_sort.begin() ; i != to_sort.end(); i++){
+           i->second = i->second/all_prob;
+        }
+       it->second = to_sort;
+  }
   w0 = static_cast<float *>(aligned_malloc(nv * n_hidden * sizeof(float), DEFAULT_ALIGN));
   // random initialisation
   for (size_t i = 0; i < nv * n_hidden; i++)
