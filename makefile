@@ -1,4 +1,4 @@
-TARGETS = verse_distributionsample verse-pairs
+TARGETS = verse_distributionsample verse-pairs verse-generate
 LIBS = verse-library
 
 CXXFLAGS = -std=c++11 -march=native -g

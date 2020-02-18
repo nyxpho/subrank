@@ -86,8 +86,21 @@ def random_walk_with_restart(graph, node_start, alpha=0.85):
         prob = random.random()
     return node_end
 
-def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, out_file):
-    wb = open(out_file, "w")
+def print_ego_pr(graph, subgraphs, outfile):
+    wb = open(outfile)
+    for i in subgraphs.keys():
+        PR_s = PR_subgraph_todictandlist(graph, subgraphs[i], epsilon, threshold)
+        wb.write(str(i))
+        for s in PR_s:
+            if PR_s[s] > 0:
+            wb.write(" " + str(s) + " " +  str(PR_s[s]))
+        wb.write("\n")
+
+    wb.close()
+
+
+def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, outfile):
+    wb = open(outfile, "w")
     all_PRs = dict()
     for i in subgraphs.keys():
         PR_s = PR_subgraph_todictandlist(graph, subgraphs[i], epsilon, threshold)
@@ -169,4 +182,5 @@ if __name__ == '__main__':
     epsilon = 1.0 / g.num_vertices()
     threshold = epsilon
     #save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
-    generate_pairs_proximity(g, subgraphs, 100000000, epsilon, threshold, args.get("output"))
+    #generate_pairs_proximity(g, subgraphs, 100000000, epsilon, threshold, args.get("output"))
+     print_ego_pr(g, subgraphs, args.get("output"))
