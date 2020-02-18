@@ -44,11 +44,10 @@ def save_rank_proximities(graph, subgraphs, epsilon, threshold, filename):
     sub_rank = []
     row_ind = []
     col_ind = []
-    num_cores = multiprocessing.cpu_count()
     for s1 in subgraphs.keys():
         prox = dict()
         M1 = all_PRs[s1] * PPR
-        results = Parallel(n_jobs=num_cores)(delayed(product)(M1, all_PRs[s2], s2) for s2 in subgraphs.keys())
+        results = Parallel(n_jobs=5)(delayed(product)(M1, all_PRs[s2], s2) for s2 in subgraphs.keys())
         # print results
         for (k, v) in results:
             prox[k] = v
@@ -104,7 +103,7 @@ def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, ou
         ego_start = graph.vertex_properties["name"][index]
         node_start = ego_start
         # select a node node_start according to its PR in the selected ego network
-        '''
+        
         pr_s1_list = all_PRs[ego_start][1]
         pr_node = random.random()
         sum_pr = 0
@@ -117,11 +116,11 @@ def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, ou
                 break
             sum_pr = sum_pr + t[1]
         #print(node_start)
-        '''
+        
         # perform from the node_start a random walk in the graph until node_end
         node_end = random_walk_with_restart(graph, name_to_index[node_start])
 
-        '''
+        
         # retrieve all the ego networks containing node_end and its probability in these ego networks
         in_neigh = graph.get_in_neighbors(node_end)
         node_end_name = graph.vertex_properties["name"][node_end]
@@ -151,8 +150,7 @@ def generate_pairs_proximity(graph, subgraphs, num_pairs, epsilon, threshold, ou
             sum_pr = sum_pr + t[1]
         #print(index_ego_end)
         wb.write(ego_start + " " + ego_end + "\n")
-        '''
-        wb.write(ego_start + ' '+ graph.vertex_properties["name"][node_end] + '\n')
+        
 
     wb.close()
 
@@ -167,8 +165,8 @@ if __name__ == '__main__':
     args = vars(my_parser.parse_args())
     g = read_graph(args.get("input"), True)
     random.seed(42)
-    subgraphs = egonets(g, True)
+    subgraphs = egonets_star(g, True)
     epsilon = 1.0 / g.num_vertices()
     threshold = epsilon
     #save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
-    generate_pairs_proximity(g, subgraphs, 1000000, epsilon, threshold, args.get("output"))
+    generate_pairs_proximity(g, subgraphs, 100000000, epsilon, threshold, args.get("output"))

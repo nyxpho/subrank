@@ -1,6 +1,7 @@
 import numpy as np
 import graph_tool as gt
 import graph_tool.centrality as gc
+from graph_tool import GraphView
 from scipy.sparse import csr_matrix
 '''
 This function reads a graph from the file and renumbers the vertices.
@@ -52,11 +53,12 @@ def egonets_star(graph, direction):
 def egonets(graph, direction):
     egonets = dict()
     for node in graph.vertices():
-        mask = g.new_vertex_property("bool")
+        mask = graph.new_vertex_property("bool")
         for u in node.out_neighbours():
             mask[u] = True
         mask[node] = True
-        egonets[graph.vertex_properties["name"][node]] = GraphView(graph, vfilt=mask)
+        label_node = graph.vertex_properties["name"][node]
+        egonets[label_node] = GraphView(graph, vfilt=mask)
     return egonets
 
 '''

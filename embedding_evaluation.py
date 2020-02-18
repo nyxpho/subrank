@@ -20,6 +20,7 @@ def read_embeddings(filein):
     rb = open(filein, 'r')
     emb = dict()
     #rb.readline()
+    index = 0
     for line in rb.readlines():
         elem = line.strip().split(' ')
         e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
@@ -27,7 +28,10 @@ def read_embeddings(filein):
     rb.close()
     a = []
     for i in range(0, len(emb)):
-        a.append(emb[i])
+        if i in emb:
+            a.append(emb[i])
+        #else:
+        #    a.append(np.zeros(128))
     return a
 
 
