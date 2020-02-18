@@ -191,7 +191,7 @@ inline int sample_pair(int node)
 {
   int start_node = sample_rw_distr(node, pr_ego_list[node]);
   int inter_node = sample_rw(start_node);
-  int end_node = sample_rw_distr(inter_node, pr_ego_belong[node])
+  int end_node = sample_rw_distr(inter_node, pr_ego_belong[node]);
   return end_node;
   // now we need to find the ego network to which it belongs
 
