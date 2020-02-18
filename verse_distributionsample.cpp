@@ -38,6 +38,9 @@ int n_hidden = 128;
 int n_samples = 3;
 float ppralpha = 0.85f;
 std::map<int, std::vector<pair<int, float> > > v_PPR;
+std::map<int, std::map<int, float>> pr_ego_map;
+std::map<int, std::vector<std::pair<int, float>>> pr_ego_list;
+std::map<int, std::vector<std::pair<int, float>>> pr_ego_belong;
 ull total_steps;
 ull step = 0;
 
@@ -138,27 +141,27 @@ inline int sample_neighbor(int node) {
 // here the sampling is happening
 // ppralpha is the alpha that decides if to jump to the next edges
 
-// inline int sample_rw(int node)
-// {
-//   int n2 = node;
-//   // implements the random walk and the final one is returned
-//   // ppralpha helps in deciding the probability
-//   while (drand() < ppralpha)
-//   {
-//     int neighbor = sample_neighbor(n2);
-//     if (neighbor == -1)
-//       return n2;
-//     n2 = neighbor;
-//   }
-//   return n2;
-// }
+ inline int sample_rw(int node)
+ {
+   int n2 = node;
+   // implements the random walk and the final one is returned
+   // ppralpha helps in deciding the probability
+   while (drand() < ppralpha)
+   {
+     int neighbor = sample_neighbor(n2);
+     if (neighbor == -1)
+       return n2;
+     n2 = neighbor;
+   }
+   return n2;
+ }
 
-inline int sample_rw(int node)
+inline int sample_rw_distr(int node)
 {
   int n2 = node;
   // implements the random walk and the final one is returned
   // ppralpha helps in deciding the probability
-  vector<pair<int, float> > tempHere = v_PPR[node];
+  vector<pair<int, float> > tempHere = pr_ego_list[node];
   float rando = drand();
   double run_sum = 0.0;
 
@@ -183,6 +186,14 @@ inline int sample_rw(int node)
 
 }
 
+
+inline int sample_pair(int node)
+{
+  int start_node = sample_rw_distr(node);
+  int inter_node = sample_rw(start_node);
+
+  // now we need to find the ego network to which it belongs
+}
 int ArgPos(char *str, int argc, char **argv) {
   for (int a = 1; a < argc; a++)
     if (!strcmp(str, argv[a])) {
@@ -337,64 +348,38 @@ int main(int argc, char **argv) {
 
   // PPR file read --------------------------------------------- ----------------------------
 
+
   std::fstream in(ppr_file);
   std::string line;
   int veci = 0;
 
-  string rowVecstr;
-  std::getline(in, rowVecstr);
-
-  string colVecstr;
-  std::getline(in, colVecstr);
-
-  string valVecstr;
-  std::getline(in, valVecstr);
-
-
-  std::stringstream sr(rowVecstr);
-  std::vector<int> rowVec;
-
-  int value;
-  while (sr >> value)
+  while(std::getline(in,line))
   {
-      rowVec.push_back(value);
-  }
-
-  std::stringstream sc(colVecstr);
-  std::vector<int> colVec;
-
-  while (sc >> value)
+  std::stringstream sr(line);
+  int index = 0 ;
+  sr>>index;
+  std::map<int, float> pr_values;
+  std::vector<std::pair<int, float>>> pr_values_list;
+  float value = 0.0;
+  int neigh = 0;
+  while (sr >> neigh && sr >> value)
   {
-      colVec.push_back(value);
+   pr_values[neigh] = value;
+   pr_values_list.push_back(std::make_pair(neigh, value));
+   if (pr_ego_belong.count(neigh) > 0 )
+   {
+   pr_ego_belong[neigh].push_back(std::make_pair(index, value));
+   }
+   else
+   {
+   std::vector<std::pair<int, float>>> pr_list;
+   pr_list.push_back(std::make_pair(index, value));
+   pr_ego_belong[neigh] = pr_list;
+   }
   }
-
-  std::stringstream sv(valVecstr);
-  std::vector<float> valVec;
-  float tempVal;
-  while (sv >> tempVal)
-  {
-      valVec.push_back(tempVal);
+  pr_ego[index] = pr_values;
+  pr_ego_list[index] = pr_values_list;
   }
-
-  int sz = valVec.size();
-
-  int indexVec = 0;
-  // int currNode = 0;
-  while(indexVec != sz){
-
-    int currNode = rowVec[indexVec];
-    vector < pair<int, float> > temp_vec;
-
-      while(rowVec[indexVec] == currNode)
-      {
-        temp_vec.push_back(make_pair(colVec[indexVec], valVec[indexVec]));
-        indexVec ++;
-      }
-      sort(temp_vec.begin(), temp_vec.end(), sortbysec);
-      v_PPR[currNode] = temp_vec;
-
-    }
-
 
   w0 = static_cast<float *>(aligned_malloc(nv * n_hidden * sizeof(float), DEFAULT_ALIGN));
   // random initialisation
