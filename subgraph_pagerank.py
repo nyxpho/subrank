@@ -96,14 +96,14 @@ def PR_subgraph(graph, subgraph, eps, threshold):
     return pr_list
 
 
-def print_ego_pr(graph, subgraphs, outfile):
-    wb = open(outfile)
+def print_subgraph_pr(graph, subgraphs, outfile):
+    wb = open(outfile, 'w')
     for i in subgraphs.keys():
         PR_s = PR_subgraph(graph, subgraphs[i], epsilon, threshold)
         wb.write(str(i))
-        for s in PR_s:
-            if PR_s[s] > 0:
-                wb.write(" " + str(s) + " " +  str(PR_s[s]))
+        for t in PR_s:
+            if t[1] > 0:
+                wb.write(" " + str(t[0]) + " " +  str(t[1]))
         wb.write("\n")
 
     wb.close()
@@ -125,4 +125,4 @@ if __name__ == '__main__':
     #this code can be easily changed to read cascades from a file (use function read cascades)
     epsilon = 1.0 / g.num_vertices()
     threshold = epsilon
-    print_ego_pr(g, subgraphs, args.get("output"))
+    print_subgraph_pr(g, subgraphs, args.get("output"))
