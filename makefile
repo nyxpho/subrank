@@ -1,5 +1,4 @@
-TARGETS = verse_distributionsample verse-pairs verse-generate
-LIBS = verse-library
+TARGETS = subrank_embeddings
 
 CXXFLAGS = -std=c++11 -march=native -g
 LIBFLAGS = -fPIC -shared -lgomp
