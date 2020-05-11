@@ -8,12 +8,12 @@ def generate_subrank_embeddings(path_to_graph, output_embeddings):
     filenamebcsr = path_to_graph + ".bcsr"
     conversion_str = "python convert.py " + path_to_graph +" "+ filenamebcsr
     os.system(conversion_str)
-    pagerank_str = "python subgraph pagerank --input" + path_to_graph + " --output " + path_to_graph + ".pr"
+    pagerank_str = "python subgraph_pagerank.py --input" + path_to_graph + " --output " + path_to_graph + ".pr"
     print(pagerank_str)
     os.system(pagerank_str)
     embedding_str = "./subrank_embeddings -input " + filenamebcsr +" -prfile " + path_to_graph + ".pr" + " -embedding "+ output_embeddings +" -dim 128 -threads 10 -nsamples 3"
     print(embedding_str)
-    os.system(verse_str)
+    os.system(embedding_str)
 
 if __name__ == '__main__':
     my_parser = argparse.ArgumentParser(prog='compute_embeddings',

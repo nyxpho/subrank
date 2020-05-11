@@ -13,12 +13,14 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 import argparse
 
 
 def read_embeddings_avg(filein):
     rb = open(filein, 'r')
     emb = dict()
+    #rb.readline()
     for line in rb.readlines():
         elem = line.strip().split(' ')
         e = np.fromstring(' '.join(elem[1:]), dtype=np.float, sep=' ')
@@ -40,7 +42,6 @@ def read_embeddings_line(filein):
         elem = line.strip().split(' ')
         e = np.fromstring(' '.join(elem[0:]), dtype=np.float, sep=' ')
         a.append(e)
-        index +=1
     rb.close()
     return a
 
@@ -64,6 +65,7 @@ def clustering(label_file, embedding_file, embedding_dim, clusters):
     print('performing kmeans clustering -------------------------------------------')
 
     embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
+    #embeddings = read_embeddings_avg(embedding_file)
     kmeans = KMeans(n_clusters=clusters, random_state=0).fit(embeddings)
     node_labels = kmeans.labels_
 
@@ -88,7 +90,7 @@ def node_classification(label_file, embedding_file, embedding_dim, percentage_tr
     print("running node_classification ---------------------------------------")
 
     embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
-    #embeddings = read_embeddings(embedding_file)
+    #embeddings = read_embeddings_avg(embedding_file)
 
     scaler = StandardScaler()
     scaler.fit(embeddings)
@@ -112,13 +114,14 @@ def node_classification(label_file, embedding_file, embedding_dim, percentage_tr
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_labels, test_size= 1 - percentage_train, random_state=42,
                                                         stratify=y_labels)
 
-    
+       
     model = OneVsOneClassifier(SVC())
     clf = GridSearchCV(model, parameter_space, n_jobs=10, cv=5, scoring='f1_micro')
     clf.fit(x_train, y_train)
-    
-    #clf = OneVsOneClassifier(LinearSVC(random_state=0))
-    #clf.fit(x_train, y_train)
+    '''
+    clf = OneVsOneClassifier(LinearSVC(random_state=0))
+    clf.fit(x_train, y_train)
+    '''
     y_pred = clf.predict(x_test)
     macro_score = f1_score(y_test, y_pred, average='macro', labels=np.unique(y_pred))
     micro_score = f1_score(y_test, y_pred, average='micro', labels=np.unique(y_pred))
@@ -131,6 +134,7 @@ def node_classification(label_file, embedding_file, embedding_dim, percentage_tr
 
 def cascade_prediction(train_file, test_file, val_file, embedding_file, embedding_dim):
     embeddings = np.fromfile(embedding_file, np.float32).reshape(-1, embedding_dim)
+    #embeddings = read_embeddings_avg(embedding_file)
     label = 0
 
     x_test = []

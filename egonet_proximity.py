@@ -87,13 +87,15 @@ def random_walk_with_restart(graph, node_start, alpha=0.85):
     return node_end
 
 def print_ego_pr(graph, subgraphs, outfile):
-    wb = open(outfile)
+    wb = open(outfile, "w")
     for i in subgraphs.keys():
-        PR_s = PR_subgraph_todictandlist(graph, subgraphs[i], epsilon, threshold)
+        PR_s = PR_subgraph_todictandlist(graph, subgraphs[i], epsilon, threshold)[1]
         wb.write(str(i))
-        for s in PR_s:
-            if PR_s[s] > 0:
-            wb.write(" " + str(s) + " " +  str(PR_s[s]))
+        for tup in PR_s:
+            if tup[1] > 0:
+                wb.write(" " + str(tup[0]) + " " +  str(tup[1]))
+            else:
+                break
         wb.write("\n")
 
     wb.close()
@@ -183,4 +185,4 @@ if __name__ == '__main__':
     threshold = epsilon
     #save_rank_proximities(g, subgraphs, epsilon, threshold, args.get("output"))
     #generate_pairs_proximity(g, subgraphs, 100000000, epsilon, threshold, args.get("output"))
-     print_ego_pr(g, subgraphs, args.get("output"))
+    print_ego_pr(g, subgraphs, args.get("output"))
