@@ -1,8 +1,17 @@
 import numpy as np
+from graph_operations import *
+from joblib import Parallel, delayed
+import multiprocessing
+import argparse
+import random
+
+import numpy as np
 import graph_tool as gt
 import graph_tool.centrality as gc
 from graph_tool import GraphView
 from scipy.sparse import csr_matrix
+
+
 '''
 This function reads a graph from the file and renumbers the vertices.
 The original IDs can be retrieved using the vertices properties
@@ -35,33 +44,22 @@ def egonets(graph, direction):
         egonets[label_node] = GraphView(graph, vfilt=mask)
     return egonets
 
-'''
-This function retrieves the test and training edge sets for link prediction.
-VERY IMPORTANT: embeddings should be learned on a graph containing only the train edges.
-'''
+def read_cascades(filename, graph, direction):
+    rb = open(filename, 'r')
+    cascades = dict()
+    for line in rb.readlines():
+        parse = line.strip().split('\t')
+        cascades[parse[0]] = []
+        for edges in parse[4].split(' '):
+            edges = edges.split(':')
+            cascades[parse[0]].append((edges[0], edges[1], float(edges[2])))
 
+    for ids in cascades:
+        list_edges = cascades[ids]
+        cascades[ids] = gt.Graph(directed=direction)
+        cascades[ids].vertex_properties["name"] = cascades[ids].add_edge_list(list_edges, hashed = True, string_vals=True)
 
-def linkprediction_testtrain(graph, percentage):
-    count = graph.num_edges() * percentage
-    test_edgelist = []
-    train_edgelist = []
-    degrees = graph.get_total_degrees(graph.get_vertices())
-    for item in graph.edges():
-        tuple_edge = (graph.vertex_properties["name"][item.source()], graph.vertex_properties["name"][item.target()])
-        if count > 0:
-            if degrees[int(item.target())] > 1 and degrees[int(item.source())] > 1 and int(item.source()) != int(item.target()):
-                count -= 1
-                degrees[int(item.source())] -= 1
-                degrees[int(item.target())] -= 1
-                test_edgelist.append(tuple_edge)
-            else:
-                train_edgelist.append(tuple_edge)
-        else:
-            train_edgelist.append(tuple_edge)
-
-    return test_edgelist, train_edgelist
-
-
+    return cascades
 
 def normalize_dictionary(v):
     norm_of_v = 0.0
@@ -98,5 +96,33 @@ def PR_subgraph(graph, subgraph, eps, threshold):
     return pr_list
 
 
+def print_ego_pr(graph, subgraphs, outfile):
+    wb = open(outfile)
+    for i in subgraphs.keys():
+        PR_s = PR_subgraph(graph, subgraphs[i], epsilon, threshold)
+        wb.write(str(i))
+        for s in PR_s:
+            if PR_s[s] > 0:
+                wb.write(" " + str(s) + " " +  str(PR_s[s]))
+        wb.write("\n")
+
+    wb.close()
 
 
+
+if __name__ == '__main__':
+    my_parser = argparse.ArgumentParser(prog='subgraph_proximity',
+                                        usage='subrank_proximity path_to_graph path_output_proximity_file',
+                                        description='This program computes the proximity between ego networks and store it in a file. ')
+    my_parser.add_argument("-i", "--input", required=True,
+                           help="path to input graph")
+    my_parser.add_argument("-o", "--output", required=True,
+                           help="path for output pagerank of subgraph file necessary for subrank")
+    args = vars(my_parser.parse_args())
+    g = read_graph(args.get("input"), True)
+    random.seed(42)
+    subgraphs = egonets(g, True)
+    #this code can be easily changed to read cascades from a file (use function read cascades)
+    epsilon = 1.0 / g.num_vertices()
+    threshold = epsilon
+    print_ego_pr(g, subgraphs, args.get("output"))

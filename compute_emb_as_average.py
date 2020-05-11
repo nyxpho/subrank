@@ -17,9 +17,9 @@ def compute_avg(graph, subgraphs, fileout, embedding_file, embedding_dim):
     wb.close()
 
 if __name__ == '__main__':
-    my_parser = argparse.ArgumentParser(prog='compute_average_verse',
-                                        usage='compute_average_verse path_to_graph  name_output_file',
-                                        description='It computes VERSE average ego network embeddings.')
+    my_parser = argparse.ArgumentParser(prog='compute_emb_as_average',
+                                        usage='compute_emb_as_average path_to_graph  name_output_file',
+                                        description='It computes node embeddings as the average of the node embeddings in the ego network.')
     my_parser.add_argument("-i", "--input", required=True,
                     help="path to input graph")
     my_parser.add_argument("-o", "--output", required=True,
